@@ -76,6 +76,19 @@ export class SerialPort extends EventTarget {
 		this.readable = /** @type {ReadableStream<Uint8Array>} */(Readable.toWeb(port));
 		this.writable = /** @type {WritableStream<Uint8Array>} */(Writable.toWeb(port));
 
+		// Ugly hack to fix node not releasing lock when canceled like chrome does
+		const readable = /** @type {ReadableStream & { _getReader: typeof ReadableStream.prototype.getReader}} */(this.readable);
+		readable._getReader = this.readable.getReader;
+		readable.getReader = function (options) {
+			const reader = /** @type {ReadableStreamDefaultReader & { _cancel: typeof ReadableStreamDefaultReader.prototype.cancel}} */(this._getReader(options));
+			reader._cancel = reader.cancel;
+			reader.cancel = async function (reason) {
+				await this._cancel(reason);
+				this.releaseLock();
+			};
+			return reader;
+		};
+
 		await this.setSignals({});
 	}
 
