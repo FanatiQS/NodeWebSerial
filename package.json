@@ -1,0 +1,10 @@
+{
+	"name": "webserial-node",
+	"version": "0.1.0",
+	"type": "module",
+	"dependencies": {
+		"@inquirer/prompts": "^8.2.0",
+		"@types/w3c-web-serial": "^1.0.8",
+		"serialport": "^13.0.0"
+	}
+}
