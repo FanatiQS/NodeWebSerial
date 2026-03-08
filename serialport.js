@@ -32,16 +32,6 @@ export class SerialPort extends EventTarget {
 		this.onconnect = null;
 		/** @type {((this: this, ev: Event) => void) | null} */
 		this.ondisconnect = null;
-		this.addEventListener("connect", (event) => {
-			if (this.onconnect) {
-				this.onconnect(event);
-			}
-		});
-		this.addEventListener("disconnect", (event) => {
-			if (this.ondisconnect) {
-				this.ondisconnect(event);
-			}
-		});
 	}
 
 	get connected() {
@@ -67,6 +57,22 @@ export class SerialPort extends EventTarget {
 			rtscts: options.flowControl === "hardware",
 			parity: options.parity,
 			stopBits: options.stopBits
+		});
+
+		// Map port events from node serial port to WebSerial port
+		port.on("open", () => {
+			const event = new Event("connect");
+			this.dispatchEvent(event);
+			if (this.onconnect) {
+				this.onconnect(event);
+			}
+		});
+		port.on("close", () => {
+			const event = new Event("disconnect");
+			this.dispatchEvent(event);
+			if (this.ondisconnect) {
+				this.ondisconnect(event);
+			}
 		});
 
 		const [ err ] = await once(port, "open");
